@@ -3,18 +3,33 @@ import { ref, watch } from 'vue';
 import axios from 'axios'
 const resultProducts = ref([])
 const param = ref('')
-const api = ref('https://jsonplaceholder.typicode.com/')
+//const api = ref('https://jsonplaceholder.typicode.com/')
+const apiGearvn = ref('https://crawl-e-commerce-api.herokuapp.com/products/shopee?product=')
+const query = ref('')
+const limit = ref('&limit=5&newest=5')
+const urlimg = ref('https://cf.shopee.vn/file/')
 const getProducts = async () => {
-  if (param.value) {
+  // if (param.value) {
+  //   try {
+  //     const res = await axios.get(api.value + param.value)
+  //     //const temp = await axios.get('https://jsonplaceholder.typicode.com/photos')
+  //     resultProducts.value = res.data
+  //   } catch (error) {
+  //     console.error();
+  //   }
+  // }
+  // param.value = ''
+
+  if (query.value) {
     try {
-      const res = await axios.get(api.value + param.value)
+      const res = await axios.get(apiGearvn.value + query.value + limit.value)
       //const temp = await axios.get('https://jsonplaceholder.typicode.com/photos')
       resultProducts.value = res.data
     } catch (error) {
       console.error();
     }
   }
-  param.value = ''
+  query.value = ''
 }
 </script>
 
@@ -47,7 +62,7 @@ const getProducts = async () => {
   </div>
   <div class="main">
     <div class="navbar fixed-top bg-white border-bottom pb-3">
-      <input @keyup.enter="getProducts" v-model="param" class="search-box" type="text" placeholder="Search.."
+      <input @keyup.enter="getProducts" v-model="query" class="search-box" type="text" placeholder="Search.."
         name="search">
       <button @click="getProducts" class="btn-search"><i class="fa fa-search"></i></button>
       <button class="btn-sort down">
@@ -68,11 +83,17 @@ const getProducts = async () => {
       </div>
 
     </div>
-    <a class="item-card" v-for="item in resultProducts" :key="item.id" :href="item.thumbnailUrl">
+    <!-- <a class="item-card" v-for="item in resultProducts" :key="item.id" :href="item.thumbnailUrl" target="_blank">
       <img :src="item.thumbnailUrl">
       <div>{{ item.title }}</div>
       <span>{{ item.id }}</span>
       <span class="float-end">{{ item.albumId }}</span>
+    </a> -->
+    <a class="item-card" v-for="item in resultProducts" :key="item.image" :href="item.image">
+      <img :src="urlimg + item.image" >
+      <div>{{ item.name }}</div>
+      <span>{{ item.price }}</span>
+      <span class="float-end">{{ item.price }}</span>
     </a>
   </div>
 </template>
