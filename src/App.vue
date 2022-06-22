@@ -1,35 +1,54 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { onBeforeMount, onMounted, ref, watch } from 'vue';
 import axios from 'axios'
+
 const resultProducts = ref([])
 const param = ref('')
-//const api = ref('https://jsonplaceholder.typicode.com/')
-const apiGearvn = ref('https://crawl-e-commerce-api.herokuapp.com/products/shopee?product=')
-const query = ref('')
-const limit = ref('&limit=5&newest=5')
-const urlimg = ref('https://cf.shopee.vn/file/')
-const getProducts = async () => {
-  // if (param.value) {
-  //   try {
-  //     const res = await axios.get(api.value + param.value)
-  //     //const temp = await axios.get('https://jsonplaceholder.typicode.com/photos')
-  //     resultProducts.value = res.data
-  //   } catch (error) {
-  //     console.error();
-  //   }
-  // }
-  // param.value = ''
+const api = ref('https://jsonplaceholder.typicode.com/')
+//const apiGearvn = ref('https://crawl-e-commerce-api.herokuapp.com/products/lazada?product=')
+//const query = ref('')
+// const limit = ref('&limit=5&newest=5')
+// const urlimg = ref('https://cf.shopee.vn/file/')
 
-  if (query.value) {
+const getProducts = async () => {
+  if (param.value) {
     try {
-      const res = await axios.get(apiGearvn.value + query.value + limit.value)
+      const res = await axios.get(api.value + param.value)
       //const temp = await axios.get('https://jsonplaceholder.typicode.com/photos')
       resultProducts.value = res.data
     } catch (error) {
       console.error();
     }
   }
-  query.value = ''
+  param.value = ''
+
+  // if (query.value) {
+  //   try {
+  //     const res = await axios.get(apiGearvn.value + query.value)
+  //     //const temp = await axios.get('https://jsonplaceholder.typicode.com/photos')
+  //     resultProducts.value = res.data
+  //   } catch (error) {
+  //     console.error();
+  //   }
+  // }
+  // query.value = ''
+}
+
+const getNextProducts = async () => {
+  window.onscroll = () => {
+    let bottomOfWindow = document.documentElement.scrollTop + window.innerHeight === document.documentElement.offsetHeight;
+    if (bottomOfWindow) {
+      try {
+        const res = await axios.get(api.value + param.value)
+        resultProducts.value.push(res.data)
+      } catch {
+        console.error()
+      }
+    }
+  }
+}
+onMounted() {
+  this.getNextProducts()
 }
 </script>
 
@@ -60,9 +79,10 @@ const getProducts = async () => {
       </ul>
     </form>
   </div>
+
   <div class="main">
     <div class="navbar fixed-top bg-white border-bottom pb-3">
-      <input @keyup.enter="getProducts" v-model="query" class="search-box" type="text" placeholder="Search.."
+      <input @keyup.enter="getProducts" v-model="param" class="search-box" type="text" placeholder="Search.."
         name="search">
       <button @click="getProducts" class="btn-search"><i class="fa fa-search"></i></button>
       <button class="btn-sort down">
@@ -73,7 +93,6 @@ const getProducts = async () => {
         <i class="fa fa-caret-up"></i>
         Giá cao
       </button>
-
       <div class="ms-auto">
         <label class="">Khoảng giá</label>
         <input class="range range-down" type="number" placeholder="Tối thiểu">
@@ -81,20 +100,26 @@ const getProducts = async () => {
         <input class="range range-up ms-0" type="number" placeholder="Tối đa">
         <button class="btn-range fw-bold" type="submit">Áp dụng</button>
       </div>
-
     </div>
+
+    <lazy-component v-for="item in resultProducts" :key="item.id">
+      <img :src="item.thumbnailUrl">
+      <div>{{ item.title }}</div>
+      <span>{{ item.id }}</span>
+      <span class="float-end">{{ item.albumId }}</span>
+    </lazy-component>
     <!-- <a class="item-card" v-for="item in resultProducts" :key="item.id" :href="item.thumbnailUrl" target="_blank">
       <img :src="item.thumbnailUrl">
       <div>{{ item.title }}</div>
       <span>{{ item.id }}</span>
       <span class="float-end">{{ item.albumId }}</span>
     </a> -->
-    <a class="item-card" v-for="item in resultProducts" :key="item.image" :href="item.image">
+    <!-- <a class="item-card" v-for="item in resultProducts" :key="item.image" :href="item.image" target="_blank">
       <img :src="urlimg + item.image" >
       <div>{{ item.name }}</div>
       <span>{{ item.price }}</span>
       <span class="float-end">{{ item.price }}</span>
-    </a>
+    </a> -->
   </div>
 </template>
 
@@ -238,7 +263,15 @@ img {
   margin: 10px 20px;
   /* border: 1px solid #ccc; */
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+  /* opacity: 0;
+  transition: all 0.1s;
+  transform: translate3d(-50px, 0, 0); */
 }
+
+/* .item-card.active {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+} */
 
 .item-card:hover {
   box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.4);
