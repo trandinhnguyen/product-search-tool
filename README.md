@@ -1,6 +1,6 @@
-# project 3
+# Project 3
 
-This template should help get you started developing with Vue 3 in Vite.
+Tìm kiếm và tổng hợp sản phẩm từ các trang thương mại điện tử: Shopee, Tiki, Lazada
 
 ## Recommended IDE Setup
 
