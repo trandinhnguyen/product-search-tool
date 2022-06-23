@@ -1,54 +1,60 @@
-<script setup>
-import { onBeforeMount, onMounted, ref, watch } from 'vue';
+<script>
 import axios from 'axios'
+import LazyList from 'lazy-load-list/vue'
+import colors from './colors'
+import resultProducts from './resultProducts'
 
-const resultProducts = ref([])
-const param = ref('')
-const api = ref('https://jsonplaceholder.typicode.com/')
-//const apiGearvn = ref('https://crawl-e-commerce-api.herokuapp.com/products/lazada?product=')
-//const query = ref('')
-// const limit = ref('&limit=5&newest=5')
-// const urlimg = ref('https://cf.shopee.vn/file/')
-
-const getProducts = async () => {
-  if (param.value) {
-    try {
-      const res = await axios.get(api.value + param.value)
-      //const temp = await axios.get('https://jsonplaceholder.typicode.com/photos')
-      resultProducts.value = res.data
-    } catch (error) {
-      console.error();
+export default {
+  components: {
+    LazyList
+  },
+  data() {
+    return {
+      param: '',
+      api: 'https://jsonplaceholder.typicode.com/',
+      resultProducts,
+      colors,
+      resultCheck: false,
+      sortBy: 'id',
+      sortDirection: 'asc',
     }
-  }
-  param.value = ''
+  },
+  methods: {
+    async getProducts() {
+      if (this.param) {
+        this.resultCheck = false
 
-  // if (query.value) {
-  //   try {
-  //     const res = await axios.get(apiGearvn.value + query.value)
-  //     //const temp = await axios.get('https://jsonplaceholder.typicode.com/photos')
-  //     resultProducts.value = res.data
-  //   } catch (error) {
-  //     console.error();
-  //   }
-  // }
-  // query.value = ''
-}
-
-const getNextProducts = async () => {
-  window.onscroll = () => {
-    let bottomOfWindow = document.documentElement.scrollTop + window.innerHeight === document.documentElement.offsetHeight;
-    if (bottomOfWindow) {
-      try {
-        const res = await axios.get(api.value + param.value)
-        resultProducts.value.push(res.data)
-      } catch {
-        console.error()
+        await axios.get(this.api + this.param)
+          .then(response => {
+            this.resultProducts = response.data
+          }
+          )
+        this.resultCheck = true
+        this.param = ''
+      }
+    },
+    sort: function (s) {
+      if (s === 'asc') {
+        this.sortDirection = 'asc';
+      } else {
+        this.sortDirection = 'desc';
       }
     }
-  }
-}
-onMounted() {
-  this.getNextProducts()
+    // xY() {
+    //   this.tmp = this.resultProducts
+    // }
+  },
+  computed: {
+    sortedProducts: function () {
+      return this.resultProducts.sort((p1, p2) => {
+        let modifier = 1;
+        if (this.sortDirection === 'desc') modifier = -1;
+        if (p1[this.sortBy] < p2[this.sortBy]) return -1 * modifier;
+        if (p1[this.sortBy] > p2[this.sortBy]) return 1 * modifier;
+        return 0;
+      });
+    }
+  },
 }
 </script>
 
@@ -85,13 +91,13 @@ onMounted() {
       <input @keyup.enter="getProducts" v-model="param" class="search-box" type="text" placeholder="Search.."
         name="search">
       <button @click="getProducts" class="btn-search"><i class="fa fa-search"></i></button>
-      <button class="btn-sort down">
+      <button @click="sort('desc')" class="btn-sort down">
         <i class="fa fa-caret-down"></i>
-        Giá thấp
-      </button>
-      <button class="btn-sort up">
-        <i class="fa fa-caret-up"></i>
         Giá cao
+      </button>
+      <button @click="sort('asc')" class="btn-sort up">
+        <i class="fa fa-caret-up"></i>
+        Giá thấp
       </button>
       <div class="ms-auto">
         <label class="">Khoảng giá</label>
@@ -102,12 +108,20 @@ onMounted() {
       </div>
     </div>
 
-    <lazy-component v-for="item in resultProducts" :key="item.id">
-      <img :src="item.thumbnailUrl">
-      <div>{{ item.title }}</div>
-      <span>{{ item.id }}</span>
-      <span class="float-end">{{ item.albumId }}</span>
-    </lazy-component>
+    <div class="x" v-if="resultCheck">
+      <LazyList :data="sortedProducts" :itemsPerRender="20" containerClasses="list" defaultLoadingColor="false">
+        <template v-slot="{ item }">
+          <a class="item-card" :href="item.thumbnailUrl" target="_blank">
+            <img :src="item.thumbnailUrl">
+            <div>{{ item.title }}</div>
+            <span>{{ item.id }}</span>
+            <span class="float-end">{{ item.albumId }}</span>
+          </a>
+        </template>
+      </LazyList>
+    </div>
+
+
     <!-- <a class="item-card" v-for="item in resultProducts" :key="item.id" :href="item.thumbnailUrl" target="_blank">
       <img :src="item.thumbnailUrl">
       <div>{{ item.title }}</div>
@@ -120,7 +134,11 @@ onMounted() {
       <span>{{ item.price }}</span>
       <span class="float-end">{{ item.price }}</span>
     </a> -->
+
   </div>
+  <!-- <p>{{ resultProducts }}</p>
+  <p>{{colors}}</p> -->
+  <p>{{ tmp }}</p>
 </template>
 
 <style>
@@ -136,7 +154,7 @@ onMounted() {
   top: 0;
   left: 0;
   overflow-x: hidden;
-  padding: 20px 10px;
+  padding: 20px 10px 0px;
   border-right: 1px solid #ccc;
   /* box-shadow: 3px 0px 10px rgba(0, 0, 0, 0.19); */
 }
@@ -149,8 +167,8 @@ onMounted() {
 .main {
   margin-left: 300px;
   /* font-size: 28px; */
-  padding-left: 30px;
-  padding-top: 100px;
+  /* padding-left: 10px; */
+  padding-top: 80px;
 }
 
 .search-box {
@@ -259,19 +277,13 @@ img {
 .item-card {
   height: 320px;
   width: 251px;
-  float: left;
+  position: relative;
+  overflow: hidden;
   margin: 10px 20px;
   /* border: 1px solid #ccc; */
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
-  /* opacity: 0;
-  transition: all 0.1s;
-  transform: translate3d(-50px, 0, 0); */
-}
 
-/* .item-card.active {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-} */
+}
 
 .item-card:hover {
   box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.4);
@@ -281,5 +293,18 @@ img {
 a {
   text-decoration: none;
   color: unset;
+}
+
+.x {
+  width: 1230px;
+  height: 630px;
+  overflow: hidden;
+}
+
+.list {
+  justify-content: center;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 24px;
 }
 </style>
