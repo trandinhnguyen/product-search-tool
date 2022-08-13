@@ -1,8 +1,6 @@
 <script>
 import axios from 'axios'
 import LazyList from 'lazy-load-list/vue'
-import colors from './colors'
-import resultProducts from './resultProducts'
 
 export default {
   components: {
@@ -11,10 +9,20 @@ export default {
   data() {
     return {
       param: '',
+      sample: 'posts',
       api: 'https://jsonplaceholder.typicode.com/',
-      resultProducts,
-      colors,
+      apiTiki: 'http://localhost:9999/products/tiki?page=3&product=',
+      apiShopee: 'http://localhost:9999/products/shopee?product=',
+      apiLazada: 'http://localhost:9999/products/lazada?product=',
+      resultProducts: [{}],
+      tikiProduct: [{}],
+      lazadaProduct: [{}],
+      shopeeProduct: [{}],
       resultCheck: false,
+      tikiCheck: false,
+      lazadaCheck: false,
+      shopeeCheck: false,
+
       sortBy: 'id',
       sortDirection: 'asc',
     }
@@ -24,11 +32,19 @@ export default {
       if (this.param) {
         this.resultCheck = false
 
-        await axios.get(this.api + this.param)
+        await axios.get(this.apiTiki + this.param)
           .then(response => {
-            this.resultProducts = response.data
+            this.tikiProduct = response.data;
           }
           )
+        await axios.get(this.apiLazada + this.param)
+          .then(response => {
+            this.shopeeProduct = response.data;
+          }
+          )
+
+        this.resultProducts = this.tikiProduct
+        this.resultProducts = this.resultProducts.concat(this.shopeeProduct)
         this.resultCheck = true
         this.param = ''
       }
@@ -39,10 +55,29 @@ export default {
       } else {
         this.sortDirection = 'desc';
       }
+    },
+  },
+  watch: {
+    tikiCheck() {
+      if ((this.tikiCheck && this.shopeeCheck) || (!this.tikiCheck && !this.shopeeCheck)) {
+        this.resultProducts = this.tikiProduct
+        this.resultProducts = this.resultProducts.concat(this.shopeeProduct)
+      } else if (this.tikiCheck) {
+        this.resultProducts = this.tikiProduct
+      } else {
+        this.resultProducts = this.shopeeProduct
+      }
+    },
+    shopeeCheck() {
+      if ((this.tikiCheck && this.shopeeCheck) || (!this.tikiCheck && !this.shopeeCheck)) {
+        this.resultProducts = this.tikiProduct
+        this.resultProducts = this.resultProducts.concat(this.shopeeProduct)
+      } else if (this.tikiCheck) {
+        this.resultProducts = this.tikiProduct
+      } else {
+        this.resultProducts = this.shopeeProduct
+      }
     }
-    // xY() {
-    //   this.tmp = this.resultProducts
-    // }
   },
   computed: {
     sortedProducts: function () {
@@ -67,21 +102,17 @@ export default {
     <form>
       <ul class="">
         <li>
-          <input class="form-check-input" type="checkbox" id="gearvn">
-          <label class="form-check-label ms-2" for="gearvn">Gear VN</label>
-        </li>
-        <li>
-          <input class="form-check-input" type="checkbox" id="tiki">
+          <input class="form-check-input" type="checkbox" id="tiki" v-model="tikiCheck">
           <label class="form-check-label ms-2" for="tiki">Tiki</label>
         </li>
         <li>
-          <input class="form-check-input" type="checkbox" id="lazada">
-          <label class="form-check-label ms-2" for="lazada">Lazada</label>
-        </li>
-        <li>
-          <input class="form-check-input" type="checkbox" id="shopee">
+          <input class="form-check-input" type="checkbox" id="shopee" v-model="shopeeCheck">
           <label class="form-check-label ms-2" for="shopee">Shopee</label>
         </li>
+        <!-- <li>
+          <input class="form-check-input" type="checkbox" id="lazada">
+          <label class="form-check-label ms-2" for="lazada">Lazada</label>
+        </li> -->
       </ul>
     </form>
   </div>
@@ -91,13 +122,13 @@ export default {
       <input @keyup.enter="getProducts" v-model="param" class="search-box" type="text" placeholder="Search.."
         name="search">
       <button @click="getProducts" class="btn-search"><i class="fa fa-search"></i></button>
-      <button @click="sort('desc')" class="btn-sort down">
-        <i class="fa fa-caret-down"></i>
-        Giá cao
-      </button>
       <button @click="sort('asc')" class="btn-sort up">
         <i class="fa fa-caret-up"></i>
         Giá thấp
+      </button>
+      <button @click="sort('desc')" class="btn-sort down">
+        <i class="fa fa-caret-down"></i>
+        Giá cao
       </button>
       <div class="ms-auto">
         <label class="">Khoảng giá</label>
@@ -111,34 +142,16 @@ export default {
     <div class="x" v-if="resultCheck">
       <LazyList :data="sortedProducts" :itemsPerRender="20" containerClasses="list" defaultLoadingColor="false">
         <template v-slot="{ item }">
-          <a class="item-card" :href="item.thumbnailUrl" target="_blank">
-            <img :src="item.thumbnailUrl">
-            <div>{{ item.title }}</div>
-            <span>{{ item.id }}</span>
+          <a class="item-card" :href="item.img" target="_blank">
+            <img :src="item.image">
+            <div>{{ item.name }}</div>
+            <span>{{ item.price }}</span>
             <span class="float-end">{{ item.albumId }}</span>
           </a>
         </template>
       </LazyList>
     </div>
-
-
-    <!-- <a class="item-card" v-for="item in resultProducts" :key="item.id" :href="item.thumbnailUrl" target="_blank">
-      <img :src="item.thumbnailUrl">
-      <div>{{ item.title }}</div>
-      <span>{{ item.id }}</span>
-      <span class="float-end">{{ item.albumId }}</span>
-    </a> -->
-    <!-- <a class="item-card" v-for="item in resultProducts" :key="item.image" :href="item.image" target="_blank">
-      <img :src="urlimg + item.image" >
-      <div>{{ item.name }}</div>
-      <span>{{ item.price }}</span>
-      <span class="float-end">{{ item.price }}</span>
-    </a> -->
-
   </div>
-  <!-- <p>{{ resultProducts }}</p>
-  <p>{{colors}}</p> -->
-  <p>{{ tmp }}</p>
 </template>
 
 <style>

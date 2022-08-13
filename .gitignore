@@ -28,3 +28,4 @@ coverage
 *.sw?
 
 colors.js
+resultProducts.js
