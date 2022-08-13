@@ -11,20 +11,29 @@ export default {
       param: '',
       sample: 'posts',
       api: 'https://jsonplaceholder.typicode.com/',
+
       apiTiki: 'http://localhost:9999/products/tiki?page=3&product=',
       apiShopee: 'http://localhost:9999/products/shopee?product=',
       apiLazada: 'http://localhost:9999/products/lazada?product=',
+
       resultProducts: [{}],
       tikiProduct: [{}],
       lazadaProduct: [{}],
       shopeeProduct: [{}],
+
       resultCheck: false,
+      allCheck: false,
       tikiCheck: false,
       lazadaCheck: false,
       shopeeCheck: false,
 
-      sortBy: 'id',
+      filterCheck: false,
+      minPrice: 0,
+      maxPrice: 0,
+
+      sortBy: 'price',
       sortDirection: 'asc',
+      sortCheck: false,
     }
   },
   methods: {
@@ -37,14 +46,18 @@ export default {
             this.tikiProduct = response.data;
           }
           )
-        await axios.get(this.apiLazada + this.param)
+        await axios.get(this.apiShopee + this.param)
           .then(response => {
             this.shopeeProduct = response.data;
           }
           )
+        await axios.get(this.apiLazada + this.param)
+          .then(response => {
+            this.lazadaProduct = response.data;
+          }
+          )
 
-        this.resultProducts = this.tikiProduct
-        this.resultProducts = this.resultProducts.concat(this.shopeeProduct)
+        this.all()
         this.resultCheck = true
         this.param = ''
       }
@@ -56,38 +69,71 @@ export default {
         this.sortDirection = 'desc';
       }
     },
+    // filterPrice: function () {
+    //   if (!this.filterCheck) this.filterCheck = true
+    // },
+    all() {
+      this.resultProducts = []
+      this.resultProducts = this.resultProducts.concat(this.tikiProduct)
+      this.resultProducts = this.resultProducts.concat(this.shopeeProduct)
+      this.resultProducts = this.resultProducts.concat(this.lazadaProduct)
+    },
+    forEach() {
+      this.resultProducts = []
+      if (this.tikiCheck) this.resultProducts = this.resultProducts.concat(this.tikiProduct)
+      else if (this.shopeeCheck) this.resultProducts = this.resultProducts.concat(this.shopeeProduct)
+      else if (this.lazadaCheck) this.resultProducts = this.resultProducts.concat(this.lazadaProduct)
+    },
+    logCheck() {
+      console.log(this.tikiCheck)
+      console.log(this.shopeeCheck)
+      console.log(this.lazadaCheck)
+    }
   },
   watch: {
     tikiCheck() {
-      if ((this.tikiCheck && this.shopeeCheck) || (!this.tikiCheck && !this.shopeeCheck)) {
-        this.resultProducts = this.tikiProduct
-        this.resultProducts = this.resultProducts.concat(this.shopeeProduct)
-      } else if (this.tikiCheck) {
-        this.resultProducts = this.tikiProduct
+      this.allCheck = (this.tikiCheck == this.shopeeCheck) && (this.shopeeCheck == this.lazadaCheck)
+      if (this.allCheck) {
+        this.all()
       } else {
-        this.resultProducts = this.shopeeProduct
+        this.forEach()
       }
+      this.logCheck()
     },
     shopeeCheck() {
-      if ((this.tikiCheck && this.shopeeCheck) || (!this.tikiCheck && !this.shopeeCheck)) {
-        this.resultProducts = this.tikiProduct
-        this.resultProducts = this.resultProducts.concat(this.shopeeProduct)
-      } else if (this.tikiCheck) {
-        this.resultProducts = this.tikiProduct
+      this.allCheck = (this.tikiCheck == this.shopeeCheck) && (this.shopeeCheck == this.lazadaCheck)
+      if (this.allCheck) {
+        this.all()
       } else {
-        this.resultProducts = this.shopeeProduct
+        this.forEach()
       }
+      this.logCheck()
+    },
+    lazadaCheck() {
+      this.allCheck = (this.tikiCheck == this.shopeeCheck) && (this.shopeeCheck == this.lazadaCheck)
+      if (this.allCheck) {
+        this.all()
+      } else {
+        this.forEach()
+      }
+      this.logCheck()
     }
   },
   computed: {
-    sortedProducts: function () {
-      return this.resultProducts.sort((p1, p2) => {
+    filteredAndSortedProducts: function () {
+      let data = this.resultProducts
+      if ((this.minPrice != 0) && (this.maxPrice != 0)) {
+        data = data.filter(item => (item.price >= this.minPrice) && (item.price <= this.maxPrice))
+      }
+      data = data.sort((p1, p2) => {
         let modifier = 1;
+        console.log("sorted")
         if (this.sortDirection === 'desc') modifier = -1;
         if (p1[this.sortBy] < p2[this.sortBy]) return -1 * modifier;
         if (p1[this.sortBy] > p2[this.sortBy]) return 1 * modifier;
         return 0;
       });
+      return data
     }
   },
 }
@@ -109,10 +155,10 @@ export default {
           <input class="form-check-input" type="checkbox" id="shopee" v-model="shopeeCheck">
           <label class="form-check-label ms-2" for="shopee">Shopee</label>
         </li>
-        <!-- <li>
-          <input class="form-check-input" type="checkbox" id="lazada">
+        <li>
+          <input class="form-check-input" type="checkbox" id="lazada" v-model="lazadaCheck">
           <label class="form-check-label ms-2" for="lazada">Lazada</label>
-        </li> -->
+        </li>
       </ul>
     </form>
   </div>
@@ -132,21 +178,22 @@ export default {
       </button>
       <div class="ms-auto">
         <label class="">Khoảng giá</label>
-        <input class="range range-down" type="number" placeholder="Tối thiểu">
+        <input class="range range-down" type="number" placeholder="Tối thiểu" v-model="minPrice">
         -
-        <input class="range range-up ms-0" type="number" placeholder="Tối đa">
-        <button class="btn-range fw-bold" type="submit">Áp dụng</button>
+        <input class="range range-up ms-0" type="number" placeholder="Tối đa" v-model="maxPrice">
+        <!-- <button @click="filterPrice()" class="btn-range fw-bold">Áp dụng</button> -->
       </div>
     </div>
 
     <div class="x" v-if="resultCheck">
-      <LazyList :data="sortedProducts" :itemsPerRender="20" containerClasses="list" defaultLoadingColor="false">
+      <LazyList :data="filteredAndSortedProducts" :itemsPerRender="20" containerClasses="list"
+        defaultLoadingColor="false">
         <template v-slot="{ item }">
-          <a class="item-card" :href="item.img" target="_blank">
+          <a class="item-card" :href="item.itemUrl" target="_blank">
             <img :src="item.image">
-            <div>{{ item.name }}</div>
-            <span>{{ item.price }}</span>
-            <span class="float-end">{{ item.albumId }}</span>
+            <div class="name mx-2">{{ item.name }}</div>
+            <span class="float-start ms-2 mt-3">{{ item.price }}đ</span>
+            <span class="float-end me-2 mt-3">-{{ item.discount }}</span>
           </a>
         </template>
       </LazyList>
@@ -319,5 +366,10 @@ a {
   display: flex;
   flex-wrap: wrap;
   padding: 24px;
+}
+
+.name {
+  height: 50px;
+  overflow: hidden;
 }
 </style>
