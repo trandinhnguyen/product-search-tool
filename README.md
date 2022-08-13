@@ -1,4 +1,4 @@
-# Project 3
+# Search Product
 
 Tìm kiếm và tổng hợp sản phẩm từ các trang thương mại điện tử: Shopee, Tiki, Lazada
 
