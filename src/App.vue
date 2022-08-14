@@ -81,8 +81,8 @@ export default {
     forEach() {
       this.resultProducts = []
       if (this.tikiCheck) this.resultProducts = this.resultProducts.concat(this.tikiProduct)
-      else if (this.shopeeCheck) this.resultProducts = this.resultProducts.concat(this.shopeeProduct)
-      else if (this.lazadaCheck) this.resultProducts = this.resultProducts.concat(this.lazadaProduct)
+      if (this.shopeeCheck) this.resultProducts = this.resultProducts.concat(this.shopeeProduct)
+      if (this.lazadaCheck) this.resultProducts = this.resultProducts.concat(this.lazadaProduct)
     },
     logCheck() {
       console.log(this.tikiCheck)
