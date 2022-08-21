@@ -356,8 +356,8 @@ a {
 }
 
 .x {
-  width: 1230px;
-  height: 630px;
+  width: auto;
+  height: auto;
   overflow: hidden;
 }
 
